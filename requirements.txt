@@ -2,6 +2,7 @@ fastapi
 uvicorn
 sqlalchemy
 asyncpg
+psycopg2-binary
 pydantic
 python-dotenv
 alembic
@@ -9,3 +10,4 @@ pytest
 httpx
 flake8
 black
+requests

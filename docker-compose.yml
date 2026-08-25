@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:14
@@ -8,6 +6,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 0000
       POSTGRES_DB: tender_db
+      POSTGRES_HOST_AUTH_METHOD: trust   # <-- теперь здесь
     ports:
       - "5432:5432"
     volumes:
@@ -37,3 +36,5 @@ services:
 
 volumes:
   postgres_data:
+
+  

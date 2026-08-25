@@ -1,9 +1,22 @@
 import requests
 import time
-import uuid
 
 BASE_URL = "http://localhost:8000"
 USER_ID = "tester"
+
+def wait_for_server(timeout=30):
+    start = time.time()
+    while time.time() - start < timeout:
+        try:
+            resp = requests.get(f"{BASE_URL}/health")
+            if resp.status_code == 200:
+                print("✅ Сервер готов!")
+                return True
+        except requests.exceptions.ConnectionError:
+            print("⏳ Ожидание запуска сервера...")
+        time.sleep(2)
+    print("❌ Сервер не запустился.")
+    return False
 
 def create_tender(title, description):
     response = requests.post(
@@ -14,7 +27,7 @@ def create_tender(title, description):
     if response.status_code == 201:
         return response.json()["id"]
     else:
-        print(f"Ошибка при создании тендера {title}: {response.status_code} - {response.text}")
+        print(f"Ошибка при создании {title}: {response.status_code}")
         return None
 
 def update_status(tender_id, new_status, reason):
@@ -24,38 +37,32 @@ def update_status(tender_id, new_status, reason):
         headers={"X-User-ID": USER_ID}
     )
     if response.status_code != 200:
-        print(f"Ошибка при обновлении статуса {tender_id}: {response.status_code} - {response.text}")
+        print(f"Ошибка обновления статуса {tender_id}: {response.status_code}")
 
 def main():
-    print("Ожидание готовности сервиса...")
-    time.sleep(3)  # даём серверу время запуститься
+    if not wait_for_server():
+        return
 
-    # Создаём несколько тендеров
     tenders = []
-    tenders.append(create_tender("Разработка веб-сайта", "Создать лендинг для компании"))
-    tenders.append(create_tender("Мобильное приложение", "Разработать приложение для заказа еды"))
-    tenders.append(create_tender("Дизайн-проект", "Разработать фирменный стиль"))
+    tenders.append(create_tender("Разработка веб-сайта", "Создать лендинг"))
+    tenders.append(create_tender("Мобильное приложение", "Приложение для заказа еды"))
+    tenders.append(create_tender("Дизайн-проект", "Фирменный стиль"))
 
-    # Обновляем статусы
-    for idx, tender_id in enumerate(tenders):
-        if tender_id is None:
+    for idx, t in enumerate(tenders):
+        if t is None:
             continue
-        # Первый тендер: draft → active → won
         if idx == 0:
-            update_status(tender_id, "active", "Тендер перешёл в активную фазу")
+            update_status(t, "active", "Активен")
             time.sleep(0.5)
-            update_status(tender_id, "won", "Победитель определён")
-        # Второй: draft → active → lost
+            update_status(t, "won", "Победитель")
         elif idx == 1:
-            update_status(tender_id, "active", "Тендер активен")
+            update_status(t, "active", "Активен")
             time.sleep(0.5)
-            update_status(tender_id, "lost", "Тендер проигран")
-        # Третий: draft → active (оставляем активным)
+            update_status(t, "lost", "Проигран")
         else:
-            update_status(tender_id, "active", "Тендер переведён в активную фазу")
+            update_status(t, "active", "Активен")
 
-    print(f"✅ Создано и обработано {len(tenders)} тендеров.")
-    print("Откройте http://localhost:8000/docs для просмотра и тестирования.")
+    print(f"✅ Создано {len(tenders)} тендеров. Откройте http://localhost:8000/docs")
 
 if __name__ == "__main__":
     main()
